@@ -77,12 +77,14 @@ int main(void)
             x+0.01f, y-0.01f, 0.0f,
             x, y+0.01f, 0.0f
         };
-    
+            
+        /*
         static const GLfloat g_vertex_buffer_data[] = { 
             -0.01f, -0.01f, 0.0f,
              0.01f, -0.01f, 0.0f,
              0.0f,  0.01f, 0.0f,
         };
+        */
         
         glGenBuffers(1, &vbuffers[i]);
         glBindBuffer(GL_ARRAY_BUFFER, vbuffers[i]);
@@ -90,10 +92,6 @@ int main(void)
         glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
     }
     
-    /*
-    */
-
-
     double lastTime = glfwGetTime();
     int nbFrames = 0;
     /* Loop until the user closes the window */
