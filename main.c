@@ -1,6 +1,10 @@
 #include <GLFW/glfw3.h>
 #include <OpenGL/gl3.h>
 #include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
+
+#define NUM_TRIANGLES 20000
 
 int main(void)
 {
@@ -58,17 +62,37 @@ int main(void)
     
     // Get a handle for our buffers
     GLuint vertexPosition_modelspaceID = glGetAttribLocation(programID, "vertexPosition_modelspace");
+    
+    int i;
+    float x, y;
+    srand(time(NULL));
+    GLuint vbuffers[NUM_TRIANGLES];
+    for (i=0;i<NUM_TRIANGLES;i++) {
+        x = (rand() % 2000 - 1000) / 1000.0f; 
+        y = (rand() % 2000 - 1000) / 1000.0f;
 
-    static const GLfloat g_vertex_buffer_data[] = { 
+        printf("RAND x: %f, y: %f\n", x, y);
+        const GLfloat buffer[] = {
+            x-0.01f, y-0.01f, 0.0f,
+            x+0.01f, y-0.01f, 0.0f,
+            x, y+0.01f, 0.0f
+        };
+    
+        static const GLfloat g_vertex_buffer_data[] = { 
             -0.01f, -0.01f, 0.0f,
              0.01f, -0.01f, 0.0f,
              0.0f,  0.01f, 0.0f,
-    };
+        };
+        
+        glGenBuffers(1, &vbuffers[i]);
+        glBindBuffer(GL_ARRAY_BUFFER, vbuffers[i]);
+        //glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
+    }
+    
+    /*
+    */
 
-    GLuint vertexbuffer;
-    glGenBuffers(1, &vertexbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
     double lastTime = glfwGetTime();
     int nbFrames = 0;
@@ -89,21 +113,23 @@ int main(void)
 
         // Use our shader
         glUseProgram(programID);
+        
+        for (i=0;i<NUM_TRIANGLES;i++) {
+            // 1rst attribute buffer : vertices
+            glEnableVertexAttribArray(vertexPosition_modelspaceID);
+            glBindBuffer(GL_ARRAY_BUFFER, vbuffers[i]);
+            glVertexAttribPointer(
+                    vertexPosition_modelspaceID, // The attribute we want to configure
+                    3,                  // size
+                    GL_FLOAT,           // type
+                    GL_FALSE,           // normalized?
+                    0,                  // stride
+                    (void*)0            // array buffer offset
+                    );
 
-        // 1rst attribute buffer : vertices
-        glEnableVertexAttribArray(vertexPosition_modelspaceID);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-        glVertexAttribPointer(
-                vertexPosition_modelspaceID, // The attribute we want to configure
-                3,                  // size
-                GL_FLOAT,           // type
-                GL_FALSE,           // normalized?
-                0,                  // stride
-                (void*)0            // array buffer offset
-                );
-
-        // Draw the triangle !
-        glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
+            // Draw the triangle !
+            glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
+        }
 
         glDisableVertexAttribArray(vertexPosition_modelspaceID);
         /* Render here */
