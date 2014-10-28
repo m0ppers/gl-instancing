@@ -109,18 +109,18 @@ int main(void)
         // Use our shader
         glUseProgram(programID);
         glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
+        // 1rst attribute buffer : vertices
+        glEnableVertexAttribArray(vertexPosition_modelspaceID);
+        glVertexAttribPointer(
+                vertexPosition_modelspaceID, // The attribute we want to configure
+                3,                  // size
+                GL_FLOAT,           // type
+                GL_FALSE,           // normalized?
+                0,                  // stride
+                (void*)0            // array buffer offset
+                );
         
         for (i=0;i<NUM_TRIANGLES;i++) {
-            // 1rst attribute buffer : vertices
-            glEnableVertexAttribArray(vertexPosition_modelspaceID);
-            glVertexAttribPointer(
-                    vertexPosition_modelspaceID, // The attribute we want to configure
-                    3,                  // size
-                    GL_FLOAT,           // type
-                    GL_FALSE,           // normalized?
-                    0,                  // stride
-                    (void*)0            // array buffer offset
-                    );
 
             // Draw the triangle !
             glDrawArrays(GL_TRIANGLES, i*3, 3);
