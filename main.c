@@ -4,7 +4,8 @@
 #include <time.h>
 #include <stdlib.h>
 
-#define NUM_TRIANGLES 20000
+#define NUM_OBJECTS 20000
+#define NUM_VERTICES 200
 
 int main(void)
 {
@@ -15,7 +16,7 @@ int main(void)
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "Instancing test", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -63,32 +64,39 @@ int main(void)
     // Get a handle for our buffers
     GLuint vertexPosition_modelspaceID = glGetAttribLocation(programID, "vertexPosition_modelspace");
     
-    int i;
-    float x, y;
-    srand(time(NULL));
+    int i, j;
+    srand(1234);
     GLuint vbuffer;
 
-    GLfloat buffer[NUM_TRIANGLES * 9];
-    for (i=0;i<NUM_TRIANGLES;i++) {
-        x = (rand() % 2000 - 1000) / 1000.0f; 
-        y = (rand() % 2000 - 1000) / 1000.0f;
-
-        printf("RAND x: %f, y: %f\n", x, y);
-        buffer[i*9+0] = x-0.01f;
-        buffer[i*9+1] = y-0.01f;
-        buffer[i*9+2] = 0.0f;
-        buffer[i*9+3] = x+0.01f;
-        buffer[i*9+4] = y-0.01f;
-        buffer[i*9+5] = 0.0f;
-        buffer[i*9+6] = x;
-        buffer[i*9+7] = y+0.01f;
-        buffer[i*9+8] = 0.0f;
-
+    GLfloat *buffer = malloc(NUM_OBJECTS * NUM_VERTICES * 3 * sizeof(GLfloat));
+   
+    for (i=0;i<NUM_VERTICES * 3;i++) {
+        if (i % 2 != 2) {
+            buffer[i] = (rand() % 2000 - 1000) / 10000.0f;
+        } else {
+            buffer[i] = 0.0f;
+        }
+    }
+    int dest_index;
+    // mop: clone and translate
+    float xoffset, yoffset;
+    for (i=1;i<NUM_OBJECTS;i++) {
+        xoffset = (rand() % 2000 - 1000) / 1000.0f;
+        yoffset = (rand() % 2000 - 1000) / 1000.0f;
+        for (j=0;j<NUM_VERTICES*3;j++) {
+            dest_index = i * NUM_VERTICES * 3 + j;
+            buffer[dest_index] = buffer[j];
+            if (j % 3 == 0) {
+                buffer[dest_index] += xoffset;
+            } else if (j % 3 == 1) {
+                buffer[dest_index] += yoffset;
+            }
+        }
     }
     glGenBuffers(1, &vbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(buffer), buffer, GL_STATIC_DRAW);
-    
+    glBufferData(GL_ARRAY_BUFFER, NUM_OBJECTS * NUM_VERTICES * 3 * sizeof(GLfloat), buffer, GL_STATIC_DRAW);
+
     double lastTime = glfwGetTime();
     int nbFrames = 0;
     /* Loop until the user closes the window */
@@ -120,10 +128,10 @@ int main(void)
                 (void*)0            // array buffer offset
                 );
         
-        for (i=0;i<NUM_TRIANGLES;i++) {
+        for (i=0;i<NUM_OBJECTS;i++) {
 
             // Draw the triangle !
-            glDrawArrays(GL_TRIANGLES, i*3, 3);
+            glDrawArrays(GL_LINE_LOOP, i*NUM_VERTICES, NUM_VERTICES);
         }
 
         glDisableVertexAttribArray(vertexPosition_modelspaceID);
@@ -135,6 +143,7 @@ int main(void)
         /* Poll for and process events */
         glfwPollEvents();
     }
+    free(buffer);
 
     glfwTerminate();
     return 0;
