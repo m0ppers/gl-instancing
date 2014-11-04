@@ -27,20 +27,18 @@ void printFps() {
     }
 }
 
-int main(void)
-{
+GLFWwindow* initGL() {
     GLFWwindow* window;
-
     /* Initialize the library */
     if (!glfwInit())
-        return -1;
+        return NULL;
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(800, 600, "Instancing test", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
-        return -1;
+        return NULL;
     }
 
     /* Make the window's context current */
@@ -51,35 +49,74 @@ int main(void)
     printf("GLSL Version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
     printf("GL_EXTENSIONS: %s\n", glGetString(GL_EXTENSIONS));
 
-    const char* vshader = "attribute vec3 offset;\nattribute vec3 vertexPosition_modelspace;\nvoid main() {\ngl_Position = vec4(offset + vertexPosition_modelspace, 1.0);\n}";
-    const char* fshader = "void main() {\ngl_FragColor = vec4(1.0, 0.0, 0.0, 1);\n}";
-    
-    GLuint vs = glCreateShader (GL_VERTEX_SHADER);
-    glShaderSource (vs, 1, &vshader, NULL);
-    glCompileShader (vs);
+    return window;
+}
 
+GLuint createShader(GLenum type, const GLchar * const *source) {
+    GLuint shader;
     GLint result = GL_FALSE;
     int len;
-    glGetShaderiv(vs, GL_COMPILE_STATUS, &result);
-    glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &len);
 
-    printf("VS RESULT %d, LEN %d\n", result, len);
+    shader = glCreateShader(type);
+    glShaderSource (shader, 1, source, NULL);
+    glCompileShader (shader);
 
-    if (len > 0) {
-        char errmsg[len+1];
-        glGetShaderInfoLog(vs, len, NULL, errmsg);
-        printf("%s\n", errmsg);
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
+    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+    
+    if (result == 0) {
+        printf("SHADER FAIL RESULT %d, LEN %d\n", result, len);
+
+        if (len > 0) {
+            char errmsg[len+1];
+            glGetShaderInfoLog(shader, len, NULL, errmsg);
+            printf("%s\n", errmsg);
+        }
+        return 0;
+    }
+    return shader;
+}
+
+GLuint createGLProgram(const char* vshader, const char* fshader) {
+    GLuint programID;
+    GLuint vs;
+    GLuint fs;
+    
+    vs = createShader(GL_VERTEX_SHADER, &vshader);
+    if (!vs) {
+        return 0;
     }
 
+    fs = createShader(GL_FRAGMENT_SHADER, &fshader);
+    if (!fs) {
+        return 0;
+    }
 
-    GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
-    glShaderSource (fs, 1, &fshader, NULL);
-    glCompileShader (fs);
-
-    GLuint programID = glCreateProgram ();
+    programID = glCreateProgram ();
     glAttachShader (programID, fs);
     glAttachShader (programID, vs);
     glLinkProgram (programID);
+
+    return programID;
+}
+
+int main(void)
+{
+    GLFWwindow* window = initGL();
+
+    if (!window) {
+        return 1;
+    }
+
+
+    const char* vshader = "attribute vec3 offset;\nattribute vec3 vertexPosition_modelspace;\nvoid main() {\ngl_Position = vec4(offset + vertexPosition_modelspace, 1.0);\n}";
+    const char* fshader = "void main() {\ngl_FragColor = vec4(1.0, 0.0, 0.0, 1);\n}";
+
+    GLuint programID = createGLProgram(vshader, fshader);
+    if (!programID) {
+        return 2;
+    }
+    
     
     // Get a handle for our buffers
     GLuint vertexPosition_modelspaceID = glGetAttribLocation(programID, "vertexPosition_modelspace");
