@@ -2,5 +2,5 @@
 #define INSTANCED_RENDERER_H
 #include "renderer.h"
 
-renderer* getInstancedRenderer();
+renderer* getInstancedRenderer(int numVertices, int numObjects);
 #endif
