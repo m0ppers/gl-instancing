@@ -6,6 +6,9 @@
 #include "instanced_renderer.h"
 #include "renderer.h"
 
+#define NUM_OBJECTS 20
+#define NUM_VERTICES 200
+
 void printFps() {
     static int nbFrames = 0;
     // Measure speed
@@ -107,7 +110,7 @@ int main(void)
     }
     srand(1234);
 
-    renderer* renderer = getInstancedRenderer();
+    renderer* renderer = getInstancedRenderer(NUM_VERTICES, NUM_OBJECTS);
 
     GLuint programID = createGLProgram(renderer->vshader, renderer->fshader);
     if (!programID) {

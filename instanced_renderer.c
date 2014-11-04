@@ -3,9 +3,6 @@
 #include <OpenGL/gl3.h>
 #include <OpenGL/glext.h>
 
-#define NUM_OBJECTS 20
-#define NUM_VERTICES 200
-
 static renderer* instancedRenderer = NULL;
 static GLfloat *buffer = NULL;
 static GLuint vbuffer;
@@ -33,9 +30,9 @@ void prepare(GLuint programID) {
 
     int i, j;
 
-    buffer = malloc(NUM_OBJECTS * NUM_VERTICES * 3 * sizeof(GLfloat));
+    buffer = malloc(instancedRenderer->numObjects * instancedRenderer->numVertices * 3 * sizeof(GLfloat));
 
-    for (i=0;i<NUM_VERTICES * 3;i++) {
+    for (i=0;i<instancedRenderer->numVertices * 3;i++) {
         if (i % 2 != 2) {
             buffer[i] = (rand() % 2000 - 1000) / 10000.0f;
         } else {
@@ -44,23 +41,23 @@ void prepare(GLuint programID) {
     }
     glGenBuffers(1, &vbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-    glBufferData(GL_ARRAY_BUFFER, NUM_VERTICES * 3 * sizeof(GLfloat), buffer, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, instancedRenderer->numVertices * 3 * sizeof(GLfloat), buffer, GL_STATIC_DRAW);
 
     offsetLocation = glGetAttribLocation(programID, "offset");
-    offset = malloc(3 * sizeof(float) * NUM_OBJECTS);
+    offset = malloc(3 * sizeof(float) * instancedRenderer->numObjects);
 
     offset[0] = 0;
     offset[1] = 0;
     offset[2] = 0;
 
-    for (i=1;i<NUM_OBJECTS;i++) {
+    for (i=1;i<instancedRenderer->numObjects;i++) {
         offset[i * 3 + 0] = (rand() % 2000 - 1000) / 1000.0f;
         offset[i * 3 + 1] = (rand() % 2000 - 1000) / 1000.0f;
     }
 
     glGenBuffers(1, &obuffer);
     glBindBuffer(GL_ARRAY_BUFFER, obuffer);
-    glBufferData(GL_ARRAY_BUFFER, 3 * NUM_OBJECTS * sizeof(GLfloat), offset, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 3 * instancedRenderer->numObjects * sizeof(GLfloat), offset, GL_STATIC_DRAW);
 }
 
 void draw() {
@@ -88,18 +85,20 @@ void draw() {
             (void*)0            // array buffer offset
             );
 
-    glDrawArraysInstancedARB(GL_LINE_LOOP, 0, NUM_VERTICES, NUM_OBJECTS);
+    glDrawArraysInstancedARB(GL_LINE_LOOP, 0, instancedRenderer->numVertices, instancedRenderer->numObjects);
 
     glDisableVertexAttribArray(vertexPosition_modelspaceID);
     glDisableVertexAttribArray(offsetLocation);
     /* Render here */
 }
 
-renderer* getInstancedRenderer() {
+renderer* getInstancedRenderer(int numVertices, int numObjects) {
     if (instancedRenderer) {
         return instancedRenderer;
     }
     instancedRenderer = malloc(sizeof(renderer));
+    instancedRenderer->numVertices = numVertices;
+    instancedRenderer->numObjects = numObjects;
     instancedRenderer->vshader = "attribute vec3 offset;\nattribute vec3 vertexPosition_modelspace;\nvoid main() {\ngl_Position = vec4(offset + vertexPosition_modelspace, 1.0);\n}";
     instancedRenderer->fshader = "void main() {\ngl_FragColor = vec4(1.0, 0.0, 0.0, 1);\n}";
     instancedRenderer->prepare = prepare;
