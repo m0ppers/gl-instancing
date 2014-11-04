@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 project (gl-instancing)
-add_executable(gl-instancing main.c instanced_renderer)
+add_executable(gl-instancing main.c instanced_renderer.c standard_renderer.c)
 find_package (glfw)
 find_package (opengl)
 target_link_libraries (gl-instancing ${GLFW_LIBRARY})

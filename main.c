@@ -4,6 +4,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include "instanced_renderer.h"
+#include "standard_renderer.h"
 #include "renderer.h"
 
 #define NUM_OBJECTS 20
@@ -110,7 +111,8 @@ int main(void)
     }
     srand(1234);
 
-    renderer* renderer = getInstancedRenderer(NUM_VERTICES, NUM_OBJECTS);
+    //renderer* renderer = getInstancedRenderer(NUM_VERTICES, NUM_OBJECTS);
+    renderer* renderer = getStandardRenderer(NUM_VERTICES, NUM_OBJECTS);
 
     GLuint programID = createGLProgram(renderer->vshader, renderer->fshader);
     if (!programID) {
