@@ -1,12 +1,10 @@
 #include <GLFW/glfw3.h>
 #include <OpenGL/gl3.h>
-#include <OpenGL/glext.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
-
-#define NUM_OBJECTS 20
-#define NUM_VERTICES 200
+#include "instanced_renderer.h"
+#include "renderer.h"
 
 void printFps() {
     static int nbFrames = 0;
@@ -107,53 +105,16 @@ int main(void)
     if (!window) {
         return 1;
     }
+    srand(1234);
 
+    renderer* renderer = getInstancedRenderer();
 
-    const char* vshader = "attribute vec3 offset;\nattribute vec3 vertexPosition_modelspace;\nvoid main() {\ngl_Position = vec4(offset + vertexPosition_modelspace, 1.0);\n}";
-    const char* fshader = "void main() {\ngl_FragColor = vec4(1.0, 0.0, 0.0, 1);\n}";
-
-    GLuint programID = createGLProgram(vshader, fshader);
+    GLuint programID = createGLProgram(renderer->vshader, renderer->fshader);
     if (!programID) {
         return 2;
     }
     
-    
-    // Get a handle for our buffers
-    GLuint vertexPosition_modelspaceID = glGetAttribLocation(programID, "vertexPosition_modelspace");
-    
-    int i, j;
-    srand(1234);
-    GLuint vbuffer;
-
-    GLfloat *buffer = malloc(NUM_OBJECTS * NUM_VERTICES * 3 * sizeof(GLfloat));
-   
-    for (i=0;i<NUM_VERTICES * 3;i++) {
-        if (i % 2 != 2) {
-            buffer[i] = (rand() % 2000 - 1000) / 10000.0f;
-        } else {
-            buffer[i] = 0.0f;
-        }
-    }
-    glGenBuffers(1, &vbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-    glBufferData(GL_ARRAY_BUFFER, NUM_VERTICES * 3 * sizeof(GLfloat), buffer, GL_STATIC_DRAW);
-
-    GLuint offsetLocation = glGetAttribLocation(programID, "offset");
-    GLuint obuffer;
-    GLfloat *offset = malloc(3 * sizeof(float) * NUM_OBJECTS);
-    
-    offset[0] = 0;
-    offset[1] = 0;
-    offset[2] = 0;
-    
-    for (i=1;i<NUM_OBJECTS;i++) {
-        offset[i * 3 + 0] = (rand() % 2000 - 1000) / 1000.0f;
-        offset[i * 3 + 1] = (rand() % 2000 - 1000) / 1000.0f;
-    }
-    
-    glGenBuffers(1, &obuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, obuffer);
-    glBufferData(GL_ARRAY_BUFFER, 3 * NUM_OBJECTS * sizeof(GLfloat), offset, GL_STATIC_DRAW);
+    renderer->prepare(programID); 
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -164,36 +125,8 @@ int main(void)
 
         // Use our shader
         glUseProgram(programID);
-        glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-        // 1rst attribute buffer : vertices
-        glEnableVertexAttribArray(vertexPosition_modelspaceID);
-        glVertexAttribPointer(
-                vertexPosition_modelspaceID, // The attribute we want to configure
-                3,                  // size
-                GL_FLOAT,           // type
-                GL_FALSE,           // normalized?
-                0,                  // stride
-                (void*)0            // array buffer offset
-                );
-        
-        glBindBuffer(GL_ARRAY_BUFFER, obuffer);
-        glEnableVertexAttribArray(offsetLocation);
-        glVertexAttribDivisorARB(offsetLocation, 1);
-        glVertexAttribPointer(
-                offsetLocation, // The attribute we want to configure
-                3,                  // size
-                GL_FLOAT,           // type
-                GL_FALSE,           // normalized?
-                0,                  // stride
-                (void*)0            // array buffer offset
-                );
-
-        
-        glDrawArraysInstancedARB(GL_LINE_LOOP, 0, NUM_VERTICES, NUM_OBJECTS);
-
-        glDisableVertexAttribArray(vertexPosition_modelspaceID);
-        glDisableVertexAttribArray(offsetLocation);
-        /* Render here */
+    
+        renderer->draw();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -201,8 +134,7 @@ int main(void)
         /* Poll for and process events */
         glfwPollEvents();
     }
-    free(offset);
-    free(buffer);
+    renderer->finish();
 
     glfwTerminate();
     return 0;
