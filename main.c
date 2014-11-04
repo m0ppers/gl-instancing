@@ -5,8 +5,27 @@
 #include <time.h>
 #include <stdlib.h>
 
-#define NUM_OBJECTS 20000
+#define NUM_OBJECTS 20
 #define NUM_VERTICES 200
+
+void printFps() {
+    static int nbFrames = 0;
+    // Measure speed
+    static double lastTime;
+    double currentTime = glfwGetTime();
+
+    nbFrames++;
+    if (!lastTime) {
+        lastTime = currentTime;
+        return;    
+    }
+    if ( currentTime - lastTime >= 1.0 ){ // If last prinf() was more than 1 sec ago
+        // printf and reset timer
+        printf("%d fps\n", nbFrames);
+        nbFrames = 0;
+        lastTime += 1.0;
+    }
+}
 
 int main(void)
 {
@@ -99,21 +118,10 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, obuffer);
     glBufferData(GL_ARRAY_BUFFER, 3 * NUM_OBJECTS * sizeof(GLfloat), offset, GL_STATIC_DRAW);
 
-
-    double lastTime = glfwGetTime();
-    int nbFrames = 0;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        // Measure speed
-        double currentTime = glfwGetTime();
-        nbFrames++;
-        if ( currentTime - lastTime >= 1.0 ){ // If last prinf() was more than 1 sec ago
-            // printf and reset timer
-            printf("%d fps\n", nbFrames);
-            nbFrames = 0;
-            lastTime += 1.0;
-        }
+        printFps();
         // Clear the screen
         glClear( GL_COLOR_BUFFER_BIT );
 
