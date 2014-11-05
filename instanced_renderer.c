@@ -86,7 +86,7 @@ void draw() {
             (void*)0            // array buffer offset
             );
 
-    glDrawArraysInstancedARB(GL_LINE_LOOP, 0, instancedRenderer->numVertices, instancedRenderer->numObjects);
+    glDrawArraysInstancedARB(GL_TRIANGLES, 0, instancedRenderer->numVertices, instancedRenderer->numObjects);
 
     glDisableVertexAttribArray(vertexPosition_modelspaceID);
     glDisableVertexAttribArray(offsetLocation);

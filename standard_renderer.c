@@ -57,7 +57,7 @@ void drawStandard() {
             );
 
     for (int i=0;i<standardRenderer->numObjects;i++) {
-        glDrawArrays(GL_LINE_LOOP, i*standardRenderer->numVertices, standardRenderer->numVertices);
+        glDrawArrays(GL_TRIANGLES, i*standardRenderer->numVertices, standardRenderer->numVertices);
     }
 
     glDisableVertexAttribArray(vertexPosition_modelspaceID);
