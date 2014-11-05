@@ -1,5 +1,6 @@
 #include "instanced_renderer.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <OpenGL/gl3.h>
 #include <OpenGL/glext.h>
 
@@ -96,6 +97,7 @@ renderer* getInstancedRenderer(int numVertices, int numObjects) {
     if (instancedRenderer) {
         return instancedRenderer;
     }
+    printf("Working with instanced renderer!\n");
     instancedRenderer = malloc(sizeof(renderer));
     instancedRenderer->numVertices = numVertices;
     instancedRenderer->numObjects = numObjects;

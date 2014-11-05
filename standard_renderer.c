@@ -1,5 +1,6 @@
 #include "standard_renderer.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <OpenGL/gl3.h>
 #include <OpenGL/glext.h>
 
@@ -75,6 +76,7 @@ renderer* getStandardRenderer(int numVertices, int numObjects) {
     if (standardRenderer) {
         return standardRenderer;
     }
+    printf("Working with standard renderer!\n");
     standardRenderer = malloc(sizeof(renderer));
     standardRenderer->numVertices = numVertices;
     standardRenderer->numObjects = numObjects;
