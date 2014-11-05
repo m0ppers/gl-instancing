@@ -1,14 +1,16 @@
 #include <GLFW/glfw3.h>
 #include <OpenGL/gl3.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <stdlib.h>
 #include "instanced_renderer.h"
 #include "standard_renderer.h"
 #include "renderer.h"
+#include "argtable2.h"
 
-#define NUM_OBJECTS 20
-#define NUM_VERTICES 200
+#define RENDERER_TYPE_STANDARD 1
+#define RENDERER_TYPE_INSTANCED 2
 
 void printFps() {
     static int nbFrames = 0;
@@ -102,7 +104,7 @@ GLuint createGLProgram(const char* vshader, const char* fshader) {
     return programID;
 }
 
-int main(void)
+int glMain(renderer* renderer)
 {
     GLFWwindow* window = initGL();
 
@@ -110,9 +112,6 @@ int main(void)
         return 1;
     }
     srand(1234);
-
-    //renderer* renderer = getInstancedRenderer(NUM_VERTICES, NUM_OBJECTS);
-    renderer* renderer = getStandardRenderer(NUM_VERTICES, NUM_OBJECTS);
 
     GLuint programID = createGLProgram(renderer->vshader, renderer->fshader);
     if (!programID) {
@@ -143,4 +142,79 @@ int main(void)
 
     glfwTerminate();
     return 0;
+}
+
+void printUsage(FILE* stream, const char* progname, void** argtable) {
+    fprintf(stream, "Usage: %s", progname);
+    arg_print_syntax(stream, argtable, "\n");
+    arg_print_glossary(stream, argtable, "  %-10s %s\n");
+}
+
+int main(int argc, char** argv) {
+    struct arg_int  *numVerticesArg = arg_int0("v","vertices",NULL, "num vertices (default is 20)");
+    struct arg_int  *numObjectsArg  = arg_int0("o","objects",NULL, "num objects (default is 20)");
+    struct arg_lit  *help           = arg_lit0(NULL,"help",       "print this help and exit");
+    struct arg_str  *rendererArg    = arg_str1(NULL,NULL,"RENDERER",NULL);
+    struct arg_end  *end            = arg_end(20);
+
+    void* argtable[] = {numVerticesArg, numObjectsArg, help, rendererArg, end};
+    const char* progname = "gl-instancing";
+    int exitcode=0;
+    int nerrors;
+    renderer *renderer;
+    int numVertices = 20;
+    int numObjects = 20;
+
+    /* verify the argtable[] entries were allocated sucessfully */
+    if (arg_nullcheck(argtable) != 0)
+    {
+        /* NULL entries were detected, some allocations must have failed */
+        printf("%s: insufficient memory\n",progname);
+        exitcode=1;
+        goto exit;
+    }
+
+    /* Parse the command line as defined by argtable[] */
+    nerrors = arg_parse(argc,argv,argtable);
+
+    /* special case: '--help' takes precedence over error reporting */
+    if (help->count > 0)
+    {
+        printUsage(stderr, progname, argtable);
+        goto exit;
+    }
+
+    if (numVerticesArg->count > 0) {
+        numVertices = numVerticesArg->ival[0];
+    }
+    
+    if (numObjectsArg->count > 0) {
+        numObjects = numObjectsArg->ival[0];
+    }
+    
+    if (rendererArg->count == 0) {
+        fprintf(stderr, "Provide a renderer!\n");
+        printUsage(stderr, progname, argtable);
+        goto exit;
+    }
+
+    if (rendererArg->count > 0) {
+        if (strcmp(rendererArg->sval[0], "standard") == 0) {
+            renderer = getStandardRenderer(numVertices, numObjects);
+        } else if (strcmp(rendererArg->sval[0], "instanced") == 0) {
+            renderer = getInstancedRenderer(numVertices, numObjects);
+        } else {
+            fprintf(stderr, "Renderer %s is unknown. Supported renderers: instanced, standard\n", rendererArg->sval[0]);
+            printUsage(stderr, progname, argtable);
+            goto exit;
+        }
+    }
+
+    exitcode = glMain(renderer);
+
+exit:
+    /* deallocate each non-null entry in argtable[] */
+    arg_freetable(argtable,sizeof(argtable)/sizeof(argtable[0]));
+
+    return exitcode;
 }
