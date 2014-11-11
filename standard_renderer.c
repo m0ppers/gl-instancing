@@ -8,10 +8,9 @@ static renderer* standardRenderer = NULL;
 static GLfloat *buffer = NULL;
 static GLuint vbuffer;
 static GLuint vertexPosition_modelspaceID;
+static GLuint VertexArrayID;
 
 void prepareStandard(GLuint programID) {
-    vertexPosition_modelspaceID = glGetAttribLocation(programID, "vertexPosition_modelspace");
-
     int i, j;
     srand(1234);
 
@@ -45,10 +44,13 @@ void prepareStandard(GLuint programID) {
 }
 
 void drawStandard() {
+    glGenVertexArrays(1, &VertexArrayID);
+    glBindVertexArray(VertexArrayID);
+
     glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-    glEnableVertexAttribArray(vertexPosition_modelspaceID);
+    glEnableVertexAttribArray(0);
     glVertexAttribPointer(
-            vertexPosition_modelspaceID,
+            0,
             3,
             GL_FLOAT, 
             GL_FALSE, 
@@ -60,13 +62,15 @@ void drawStandard() {
         glDrawArrays(GL_TRIANGLES, i*standardRenderer->numVertices, standardRenderer->numVertices);
     }
 
-    glDisableVertexAttribArray(vertexPosition_modelspaceID);
+    glDisableVertexAttribArray(0);
 }
 
 void finishStandard() {
     if (buffer) {
         free(buffer);
     }
+	glDeleteBuffers(1, &vbuffer);
+	glDeleteVertexArrays(1, &VertexArrayID);
     if (standardRenderer) {
         free(standardRenderer);
     }
@@ -80,8 +84,8 @@ renderer* getStandardRenderer(int numVertices, int numObjects) {
     standardRenderer = malloc(sizeof(renderer));
     standardRenderer->numVertices = numVertices;
     standardRenderer->numObjects = numObjects;
-    standardRenderer->vshader = "attribute vec3 vertexPosition_modelspace;\nvoid main() {\ngl_Position = vec4(vertexPosition_modelspace, 1.0);\n}";
-    standardRenderer->fshader = "void main() {\ngl_FragColor = vec4(1.0, 0.0, 0.0, 1);\n}";
+    standardRenderer->vshader = "#version 330\nlayout(location = 0) in vec3 vertexPosition_modelspace;\nvoid main() {\ngl_Position.xyz = vertexPosition_modelspace;\ngl_Position.w = 1.0;\n}";
+    standardRenderer->fshader = "#version 330\nout vec3 color;\nvoid main() {\ncolor = vec3(1.0, 0.0, 0.0);\n}";
     standardRenderer->prepare = prepareStandard;
     standardRenderer->finish = finishStandard;
     standardRenderer->draw = drawStandard;

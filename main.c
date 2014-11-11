@@ -1,6 +1,5 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <OpenGL/gl3.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -34,33 +33,38 @@ void printFps() {
 
 GLFWwindow* initGL() {
     GLFWwindow* window;
-    GLenum err;
     /* Initialize the library */
     if (!glfwInit())
         return NULL;
-
+    
+    // Use OpenGL Core v3.3
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(800, 600, "Instancing test", NULL, NULL);
     if (!window)
     {
+        printf("Couldn't create window\n");
         glfwTerminate();
         return NULL;
     }
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
-    glClearColor(0.0f, 0.0f, 0.3f, 0.0f);
+	glewExperimental = 1; // Needed for core profile
+	if (glewInit() != GLEW_OK) {
+		fprintf(stderr, "Failed to initialize GLEW\n");
+		return NULL;
+	}
 
     printf("OpenGL Version supported: %s\n", glGetString(GL_VERSION));
     printf("GL Vendor: %s\n", glGetString(GL_VENDOR));
     printf("GLSL Version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
     printf("GL_EXTENSIONS: %s\n", glGetString(GL_EXTENSIONS));
 
-    err = glewInit();
-    if (err) {
-        glfwTerminate();
-        return NULL;
-    }
+    glClearColor(0.0f, 0.0f, 0.3f, 0.0f);
 
     return window;
 }

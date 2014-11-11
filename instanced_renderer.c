@@ -7,10 +7,9 @@
 static renderer* instancedRenderer = NULL;
 static GLfloat *buffer = NULL;
 static GLuint vbuffer;
-static GLuint vertexPosition_modelspaceID;
-static GLuint offsetLocation;
 static GLuint obuffer;
 static GLfloat *offset = NULL;
+static GLuint VertexArrayID;
 
 
 void finish() {
@@ -20,6 +19,12 @@ void finish() {
     if (buffer) {
         free(buffer);
     }
+    if (vbuffer) {
+        glDeleteBuffers(1, &vbuffer);
+    }
+    if (VertexArrayID) {
+        glDeleteVertexArrays(1, &VertexArrayID);
+    }
     if (instancedRenderer) {
         free(instancedRenderer);
     }
@@ -27,7 +32,6 @@ void finish() {
 
 void prepare(GLuint programID) {
     // Get a handle for our buffers
-    vertexPosition_modelspaceID = glGetAttribLocation(programID, "vertexPosition_modelspace");
 
     int i, j;
 
@@ -44,7 +48,6 @@ void prepare(GLuint programID) {
     glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
     glBufferData(GL_ARRAY_BUFFER, instancedRenderer->numVertices * 3 * sizeof(GLfloat), buffer, GL_STATIC_DRAW);
 
-    offsetLocation = glGetAttribLocation(programID, "offset");
     offset = malloc(3 * sizeof(float) * instancedRenderer->numObjects);
 
     offset[0] = 0;
@@ -62,11 +65,13 @@ void prepare(GLuint programID) {
 }
 
 void draw() {
+    glGenVertexArrays(1, &VertexArrayID);
+    glBindVertexArray(VertexArrayID);
     glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
     // 1rst attribute buffer : vertices
-    glEnableVertexAttribArray(vertexPosition_modelspaceID);
+    glEnableVertexAttribArray(0);
     glVertexAttribPointer(
-            vertexPosition_modelspaceID, // The attribute we want to configure
+            0,
             3,                  // size
             GL_FLOAT,           // type
             GL_FALSE,           // normalized?
@@ -75,10 +80,10 @@ void draw() {
             );
 
     glBindBuffer(GL_ARRAY_BUFFER, obuffer);
-    glEnableVertexAttribArray(offsetLocation);
-    glVertexAttribDivisorARB(offsetLocation, 1);
+    glEnableVertexAttribArray(1);
+    glVertexAttribDivisorARB(1, 1);
     glVertexAttribPointer(
-            offsetLocation, // The attribute we want to configure
+            1, // The attribute we want to configure
             3,                  // size
             GL_FLOAT,           // type
             GL_FALSE,           // normalized?
@@ -88,8 +93,8 @@ void draw() {
 
     glDrawArraysInstancedARB(GL_TRIANGLES, 0, instancedRenderer->numVertices, instancedRenderer->numObjects);
 
-    glDisableVertexAttribArray(vertexPosition_modelspaceID);
-    glDisableVertexAttribArray(offsetLocation);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(0);
     /* Render here */
 }
 
@@ -101,8 +106,8 @@ renderer* getInstancedRenderer(int numVertices, int numObjects) {
     instancedRenderer = malloc(sizeof(renderer));
     instancedRenderer->numVertices = numVertices;
     instancedRenderer->numObjects = numObjects;
-    instancedRenderer->vshader = "attribute vec3 offset;\nattribute vec3 vertexPosition_modelspace;\nvoid main() {\ngl_Position = vec4(offset + vertexPosition_modelspace, 1.0);\n}";
-    instancedRenderer->fshader = "void main() {\ngl_FragColor = vec4(1.0, 0.0, 0.0, 1);\n}";
+    instancedRenderer->vshader = "#version 330\nlayout(location = 0) in vec3 vertexPosition_modelspace;\nlayout(location = 1) in vec3 offset;\nvoid main() {\ngl_Position = vec4(offset + vertexPosition_modelspace, 1.0);\n}";
+    instancedRenderer->fshader = "#version 330\nout vec3 color;\nvoid main() {\ncolor = vec3(1.0, 0.0, 0.0);\n}";
     instancedRenderer->prepare = prepare;
     instancedRenderer->finish = finish;
     instancedRenderer->draw = draw;
