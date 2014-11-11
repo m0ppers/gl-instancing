@@ -81,7 +81,7 @@ void draw() {
 
     glBindBuffer(GL_ARRAY_BUFFER, obuffer);
     glEnableVertexAttribArray(1);
-    glVertexAttribDivisorARB(1, 1);
+    glVertexAttribDivisor(1, 1);
     glVertexAttribPointer(
             1, // The attribute we want to configure
             3,                  // size
@@ -91,7 +91,7 @@ void draw() {
             (void*)0            // array buffer offset
             );
 
-    glDrawArraysInstancedARB(GL_TRIANGLES, 0, instancedRenderer->numVertices, instancedRenderer->numObjects);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, instancedRenderer->numVertices, instancedRenderer->numObjects);
 
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);
