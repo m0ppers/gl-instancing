@@ -1,3 +1,4 @@
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <OpenGL/gl3.h>
 #include <stdio.h>
@@ -33,6 +34,7 @@ void printFps() {
 
 GLFWwindow* initGL() {
     GLFWwindow* window;
+    GLenum err;
     /* Initialize the library */
     if (!glfwInit())
         return NULL;
@@ -50,8 +52,15 @@ GLFWwindow* initGL() {
     glClearColor(0.0f, 0.0f, 0.3f, 0.0f);
 
     printf("OpenGL Version supported: %s\n", glGetString(GL_VERSION));
+    printf("GL Vendor: %s\n", glGetString(GL_VENDOR));
     printf("GLSL Version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
     printf("GL_EXTENSIONS: %s\n", glGetString(GL_EXTENSIONS));
+
+    err = glewInit();
+    if (err) {
+        glfwTerminate();
+        return NULL;
+    }
 
     return window;
 }
